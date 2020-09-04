@@ -2,12 +2,9 @@ from tkinter import *
 from math import *
 
 
-WIDTH, HEIGHT = 800, 500
-
-
 class Rectangle:
     def __init__(self, x, y, canvas):
-        self.canvas: Canvas = canvas
+        self.canvas = canvas
         self.dots = [x, y] * 2
         self.id = self.draw()
         self.click_flag = False
@@ -24,8 +21,9 @@ class Rectangle:
 
 
 class Player:
-    def __init__(self, x=0, y=0):
+    def __init__(self, x, y, canvas):
         self.x, self.y = x, y
+        self.canvas = canvas
         self.point_x, self.point_y = 0, 0
         self.speed = 0
         self.view = pi / 6
@@ -33,55 +31,59 @@ class Player:
     def change_point(self, x, y):
         self.point_x, self.point_y = x, y
 
-    def draw(self, canvas, radius=10):
-        canvas.create_oval(self.x - radius, self.y - radius,
+    def draw(self, radius=10):
+        self.canvas.create_oval(self.x - radius, self.y - radius,
                            self.x + radius, self.y + radius,
                            fill='yellow', width=1)
 
 
-def mouse_wheel(event, player):
-    if event.delta == -120:
-        if player.teta > pi / 24:
-            player.teta -= pi / 24
-    if event.delta == 120:
-        if player.teta < pi / 2:
-            player.teta += pi / 24
+class BeamGame:
+    def __init__(self):
+        self.width, self.height = 800, 500
 
+        self.root = Tk()
+        self.root.geometry('+300+100')
 
-def motion(event, player, blocks):
-    player.x, player.y = event.x, event.y
-    if len(blocks) and not blocks[-1].click_flag:
-        blocks[-1].change_dot(event.x, event.y)
+        self.field = Canvas(self.root, width=self.width, height=self.height, bg='silver')
+        self.field.pack()
 
+        self.player = Player(self.width / 2, self.height / 2, self.field)
+        self.blocks: [Rectangle] = []
 
-def click(event, blocks, canvas):
-    if len(blocks) > 0 and not blocks[-1].click_flag:
-        blocks[-1].click_flag = True
-    else:
-        if len(blocks) == 5:
-            blocks[0].drawing_del()
-            del blocks[0]
-        blocks.append(Rectangle(event.x, event.y, canvas))
+        self.root.bind('<Button-1>', self.click)
+        self.root.bind('<Motion>', self.motion)
+        self.root.bind('<MouseWheel>', self.mouse_wheel)
+        self.root.bind('<space>', self.blocks.clear)
+
+        self.player.draw()
+
+        self.root.mainloop()
+
+    def mouse_wheel(self, event):
+        if event.delta == -120:
+            if self.player.view > pi / 24:
+                self.player.view -= pi / 24
+        if event.delta == 120:
+            if self.player.view < pi / 2:
+                self.player.view += pi / 24
+
+    def motion(self, event):
+        self.player.x, self.player.y = event.x, event.y
+        if len(self.blocks) and not self.blocks[-1].click_flag:
+            self.blocks[-1].change_dot(event.x, event.y)
+
+    def click(self, event):
+        if len(self.blocks) > 0 and not self.blocks[-1].click_flag:
+            self.blocks[-1].click_flag = True
+        else:
+            if len(self.blocks) == 5:
+                self.blocks[0].drawing_del()
+                del self.blocks[0]
+            self.blocks.append(Rectangle(event.x, event.y, self.field))
 
 
 def main():
-    root = Tk()
-    root.geometry('+300+100')
-
-    field = Canvas(root, width=WIDTH, height=HEIGHT, bg='silver')
-    field.pack()
-
-    player = Player(WIDTH / 2, HEIGHT / 2)
-    blocks: [Rectangle] = []
-
-    root.bind('<Button-1>', lambda event: click(event, blocks, field))
-    root.bind('<Motion>', lambda event: motion(event, player, blocks))
-    root.bind('<MouseWheel>', lambda event: mouse_wheel(event, player))
-    root.bind('<space>', lambda _: blocks.clear())
-
-    player.draw(field)
-
-    root.mainloop()
+    BeamGame()
 
 
 if __name__ == '__main__':
