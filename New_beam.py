@@ -23,22 +23,44 @@ class Rectangle:
 class Player:
     def __init__(self, x, y, canvas):
         self.x, self.y = x, y
+        self.v_x, self.v_x = 0, 0
         self.canvas = canvas
         self.id = self.draw()
+
+    def draw(self):
+        radius = 10
+        return self.canvas.create_oval(self.x - radius, self.y - radius,
+                                       self.x + radius, self.y + radius,
+                                       fill='yellow', width=1)
+
+    def apply_force(self):
+        pass
+
+    def move(self):
+        pass
+
+
+class Beam:
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.id = None
         self.point_x, self.point_y = 0, 0
-        # self.speed = 0
+        self.dots = []
         self.view = pi / 6
 
     def change_point(self, x, y):
         self.point_x, self.point_y = x, y
 
-    def draw(self, radius=10):
-        return self.canvas.create_oval(self.x - radius, self.y - radius,
-                                       self.x + radius, self.y + radius,
-                                       fill='yellow', width=1)
+    def draw(self):
+        return self.canvas.create_polygon(self.dots, fill='white', width=0)
 
-    # def move(self):
-    #     self.canvas.coords(self.id, )
+    def change_view(self, event):
+        if event.delta < 0:
+            if self.view > pi / 24:
+                self.view -= pi / 24
+        elif event.delta > 0:
+            if self.view < pi / 2:
+                self.view += pi / 24
 
 
 class BeamGame:
@@ -52,7 +74,7 @@ class BeamGame:
         self.field.pack()
 
         self.player = Player(self.width / 2, self.height / 2, self.field)
-        self.player.draw()
+        self.id = self.player.draw()
         self.blocks: [Rectangle] = []
 
         self.root.bind('<Button-1>', self.click)
@@ -61,6 +83,9 @@ class BeamGame:
         self.root.bind('<space>', lambda _: self.blocks_clear())
 
         self.root.mainloop()
+
+    def step(self):
+        self.root.after(10, self.step)
 
     def click(self, event):
         if len(self.blocks) > 0 and not self.blocks[-1].click_flag:
@@ -77,17 +102,12 @@ class BeamGame:
             self.blocks[-1].change_dot(event.x, event.y)
 
     def mouse_wheel(self, event):
-        if event.delta == -120:
-            if self.player.view > pi / 24:
-                self.player.view -= pi / 24
-        if event.delta == 120:
-            if self.player.view < pi / 2:
-                self.player.view += pi / 24
+        self.player.change_view(event)
 
     def blocks_clear(self):
         for block in self.blocks:
             block.drawing_remove()
-            del block 
+            del block
 
 
 def main():
