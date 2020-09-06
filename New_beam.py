@@ -35,13 +35,17 @@ class Player(Drawn):
     def __init__(self, x, y, canvas):
         self.x, self.y = x, y
         Drawn.__init__(self, canvas)
-        self.v_x, self.v_x = 0, 0
+        self.velocity = [0, 0]
+        self.wsad = [False] * 4
 
     def draw(self):
         radius = 10
         return self.canvas.create_oval(self.x - radius, self.y - radius,
                                        self.x + radius, self.y + radius,
                                        fill='yellow', width=1)
+
+    def change_wsad(self, num, value):
+        self.wsad[num] = value
 
     def apply_force(self):
         pass
@@ -61,7 +65,7 @@ class Beam(Drawn):
     def draw(self):
         return self.canvas.create_polygon(self.dots, fill='white', width=0)
 
-    def move(self):
+    def reshape(self):
         self.canvas.coords(self.id, self.dots)
 
     def change_view(self, event):
@@ -87,15 +91,29 @@ class BeamGame:
         self.blocks: [Rectangle] = []
         self.beam = Beam(self.player, self.field)
 
+        self.bind()
+
+        self.step()
+
+        self.root.mainloop()
+
+    def step(self):
+        self.root.after(100, self.step)
+
+    def bind(self):
         self.root.bind('<Button-1>', self.click)
         self.root.bind('<Motion>', self.motion)
         self.root.bind('<MouseWheel>', self.beam.change_view)
         self.root.bind('<space>', lambda _: self.blocks_clear())
 
-        self.root.mainloop()
-
-    def step(self):
-        self.root.after(10, self.step)
+        self.root.bind('<KeyPress-w>', lambda _: self.player.change_wsad(0, True))
+        self.root.bind('<KeyRelease-w>', lambda _: self.player.change_wsad(0, False))
+        self.root.bind('<KeyPress-s>', lambda _: self.player.change_wsad(1, True))
+        self.root.bind('<KeyRelease-s>', lambda _: self.player.change_wsad(1, False))
+        self.root.bind('<KeyPress-a>', lambda _: self.player.change_wsad(2, True))
+        self.root.bind('<KeyRelease-a>', lambda _: self.player.change_wsad(2, False))
+        self.root.bind('<KeyPress-d>', lambda _: self.player.change_wsad(3, True))
+        self.root.bind('<KeyRelease-d>', lambda _: self.player.change_wsad(3, False))
 
     def click(self, event):
         if len(self.blocks) > 0 and not self.blocks[-1].click_flag:
