@@ -2,11 +2,25 @@ from tkinter import *
 from math import *
 
 
-class Rectangle:
-    def __init__(self, x, y, canvas):
-        self.dots = [x, y] * 2
+class Drawn:
+    def __init__(self, canvas):
         self.canvas = canvas
         self.id = self.draw()
+
+    def draw(self):
+        return None
+
+    def move(self, dx, dy):
+        self.canvas.move(self.id, dx, dy)
+
+    def drawing_remove(self):
+        self.canvas.delete(self.id)
+
+
+class Rectangle(Drawn):
+    def __init__(self, x, y, canvas):
+        self.dots = [x, y] * 2
+        Drawn.__init__(self, canvas)
         self.click_flag = False
 
     def draw(self):
@@ -16,16 +30,12 @@ class Rectangle:
         self.dots[2], self.dots[3] = x, y
         self.canvas.coords(self.id, self.dots)
 
-    def drawing_remove(self):
-        self.canvas.delete(self.id)
 
-
-class Player:
+class Player(Drawn):
     def __init__(self, x, y, canvas):
         self.x, self.y = x, y
+        Drawn.__init__(self, canvas)
         self.v_x, self.v_x = 0, 0
-        self.canvas = canvas
-        self.id = self.draw()
 
     def draw(self):
         radius = 10
@@ -36,16 +46,13 @@ class Player:
     def apply_force(self):
         pass
 
-    def move(self):
-        pass
 
-
-class Beam:
-    def __init__(self, canvas):
-        self.canvas = canvas
-        self.id = None
+class Beam(Drawn):
+    def __init__(self, player, canvas):
         self.point_x, self.point_y = 0, 0
-        self.dots = []
+        self.player = player
+        self.dots = [self.point_x, self.point_y, self.player.x, self.player.y]
+        Drawn.__init__(self, canvas)
         self.view = pi / 6
 
     def change_point(self, x, y):
@@ -53,6 +60,9 @@ class Beam:
 
     def draw(self):
         return self.canvas.create_polygon(self.dots, fill='white', width=0)
+
+    def move(self):
+        self.canvas.coords(self.id, self.dots)
 
     def change_view(self, event):
         if event.delta < 0:
@@ -74,12 +84,12 @@ class BeamGame:
         self.field.pack()
 
         self.player = Player(self.width / 2, self.height / 2, self.field)
-        self.id = self.player.draw()
         self.blocks: [Rectangle] = []
+        self.beam = Beam(self.player, self.field)
 
         self.root.bind('<Button-1>', self.click)
         self.root.bind('<Motion>', self.motion)
-        self.root.bind('<MouseWheel>', self.mouse_wheel)
+        self.root.bind('<MouseWheel>', self.beam.change_view)
         self.root.bind('<space>', lambda _: self.blocks_clear())
 
         self.root.mainloop()
@@ -100,9 +110,6 @@ class BeamGame:
         self.player.x, self.player.y = event.x, event.y
         if len(self.blocks) and not self.blocks[-1].click_flag:
             self.blocks[-1].change_dot(event.x, event.y)
-
-    def mouse_wheel(self, event):
-        self.player.change_view(event)
 
     def blocks_clear(self):
         for block in self.blocks:
