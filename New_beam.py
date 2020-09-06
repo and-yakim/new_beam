@@ -101,19 +101,22 @@ class BeamGame:
         self.root.after(100, self.step)
 
     def bind(self):
-        self.root.bind('<Button-1>', self.click)
-        self.root.bind('<Motion>', self.motion)
-        self.root.bind('<MouseWheel>', self.beam.change_view)
-        self.root.bind('<space>', lambda _: self.blocks_clear())
-
-        self.root.bind('<KeyPress-w>', lambda _: self.player.change_wsad(0, True))
-        self.root.bind('<KeyRelease-w>', lambda _: self.player.change_wsad(0, False))
-        self.root.bind('<KeyPress-s>', lambda _: self.player.change_wsad(1, True))
-        self.root.bind('<KeyRelease-s>', lambda _: self.player.change_wsad(1, False))
-        self.root.bind('<KeyPress-a>', lambda _: self.player.change_wsad(2, True))
-        self.root.bind('<KeyRelease-a>', lambda _: self.player.change_wsad(2, False))
-        self.root.bind('<KeyPress-d>', lambda _: self.player.change_wsad(3, True))
-        self.root.bind('<KeyRelease-d>', lambda _: self.player.change_wsad(3, False))
+        key_binds = {
+            '<Button-1>': self.click,
+            '<Motion>': self.motion,
+            '<MouseWheel>': self.beam.change_view,
+            '<space>': lambda _: self.blocks_clear(),
+            '<KeyPress-w>': lambda _: self.player.change_wsad(0, True),
+            '<KeyRelease-w>': lambda _: self.player.change_wsad(0, False),
+            '<KeyPress-s>': lambda _: self.player.change_wsad(1, True),
+            '<KeyRelease-s>': lambda _: self.player.change_wsad(1, False),
+            '<KeyPress-a>': lambda _: self.player.change_wsad(2, True),
+            '<KeyRelease-a>': lambda _: self.player.change_wsad(2, False),
+            '<KeyPress-d>': lambda _: self.player.change_wsad(3, True),
+            '<KeyRelease-d>': lambda _: self.player.change_wsad(3, False)
+        }
+        for key in key_binds:
+            self.root.bind(key, key_binds[key])
 
     def click(self, event):
         if len(self.blocks) > 0 and not self.blocks[-1].click_flag:
