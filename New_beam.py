@@ -48,7 +48,17 @@ class Player(Drawn):
         self.wsad[num] = value
 
     def apply_force(self):
-        pass
+        force = [self.wsad[3] - self.wsad[2], self.wsad[1] - self.wsad[0]]
+        for i in range(2):
+            if force[0] and force[1]:
+                force[i] *= 0.7
+            self.velocity[i] += 0.5 * force[i]
+            self.velocity[i] *= 0.9
+
+    def apply_velocity(self):
+        self.x += self.velocity[0]
+        self.y += self.velocity[1]
+        self.move(self.velocity[0], self.velocity[1])
 
 
 class Beam(Drawn):
@@ -98,7 +108,10 @@ class BeamGame:
         self.root.mainloop()
 
     def step(self):
-        self.root.after(100, self.step)
+        self.player.apply_force()
+        self.player.apply_velocity()
+        self.beam.reshape()
+        self.root.after(10, self.step)
 
     def bind(self):
         key_binds = {
@@ -128,9 +141,11 @@ class BeamGame:
             self.blocks.append(Rectangle(event.x, event.y, self.field))
 
     def motion(self, event):
-        self.player.x, self.player.y = event.x, event.y
+        x, y = event.x, event.y
+        self.player.x, self.player.y = x, y
+        self.beam.change_point(x, y)
         if len(self.blocks) and not self.blocks[-1].click_flag:
-            self.blocks[-1].change_dot(event.x, event.y)
+            self.blocks[-1].change_dot(x, y)
 
     def blocks_clear(self):
         for block in self.blocks:
