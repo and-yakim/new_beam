@@ -49,9 +49,10 @@ class Player(Drawn):
 
     def apply_force(self):
         force = [self.wsad[3] - self.wsad[2], self.wsad[1] - self.wsad[0]]
+        if force[0] and force[1]:
+            force[0] *= 0.7
+            force[1] *= 0.7
         for i in range(2):
-            if force[0] and force[1]:
-                force[i] *= 0.7
             self.velocity[i] += 0.5 * force[i]
             self.velocity[i] *= 0.9
 
@@ -65,7 +66,7 @@ class Beam(Drawn):
     def __init__(self, player, canvas):
         self.point_x, self.point_y = 0, 0
         self.player = player
-        self.dots = [self.point_x, self.point_y, self.player.x, self.player.y]
+        self.dots = [0] * 4
         Drawn.__init__(self, canvas)
         self.view = pi / 6
 
@@ -76,6 +77,7 @@ class Beam(Drawn):
         return self.canvas.create_polygon(self.dots, fill='white', width=0)
 
     def reshape(self):
+        self.dots = [self.point_x, self.point_y, self.player.x, self.player.y]
         self.canvas.coords(self.id, self.dots)
 
     def change_view(self, event):
@@ -142,7 +144,6 @@ class BeamGame:
 
     def motion(self, event):
         x, y = event.x, event.y
-        self.player.x, self.player.y = x, y
         self.beam.change_point(x, y)
         if len(self.blocks) and not self.blocks[-1].click_flag:
             self.blocks[-1].change_dot(x, y)
