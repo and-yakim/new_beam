@@ -1,5 +1,7 @@
 from tkinter import *
-from math import *
+from math import pi
+from abc import abstractmethod
+import cmath
 
 
 class Drawn:
@@ -7,14 +9,20 @@ class Drawn:
         self.canvas = canvas
         self.id = self.draw()
 
+    @abstractmethod
     def draw(self):
-        return None
+        pass
 
     def move(self, dx, dy):
         self.canvas.move(self.id, dx, dy)
 
     def drawing_remove(self):
         self.canvas.delete(self.id)
+
+    @property
+    @abstractmethod
+    def complex_dots(self):
+        return []
 
 
 class Rectangle(Drawn):
@@ -29,6 +37,17 @@ class Rectangle(Drawn):
     def change_dot(self, x, y):
         self.dots[2], self.dots[3] = x, y
         self.canvas.coords(self.id, self.dots)
+
+    @staticmethod
+    def complex_rectangle_dots(two_dots):
+        if len(two_dots) >= 4:
+            other_two_dots = [two_dots[0], two_dots[3], two_dots[2], two_dots[1]]
+            all_dots = two_dots + other_two_dots
+            return [complex(all_dots[i], all_dots[i + 1]) for i in range(0, 6, 2)]
+
+    @property
+    def complex_dots(self):
+        return Rectangle.complex_rectangle_dots(self.dots)
 
 
 class Player(Drawn):
@@ -61,6 +80,10 @@ class Player(Drawn):
         self.y += self.velocity[1]
         self.move(self.velocity[0], self.velocity[1])
 
+    @property
+    def complex_dots(self):
+        return [complex(self.x, self.y)]
+
 
 class Beam(Drawn):
     def __init__(self, player, canvas):
@@ -70,15 +93,11 @@ class Beam(Drawn):
         Drawn.__init__(self, canvas)
         self.view = pi / 6
 
-    def change_point(self, x, y):
-        self.point_x, self.point_y = x, y
-
     def draw(self):
         return self.canvas.create_polygon(self.dots, fill='white', width=0)
 
-    def reshape(self):
-        self.dots = [self.point_x, self.point_y, self.player.x, self.player.y]
-        self.canvas.coords(self.id, self.dots)
+    def change_point(self, x, y):
+        self.point_x, self.point_y = x, y
 
     def change_view(self, event):
         if event.delta < 0:
@@ -87,6 +106,14 @@ class Beam(Drawn):
         elif event.delta > 0:
             if self.view < pi / 2:
                 self.view += pi / 24
+
+    @property
+    def complex_dots(self):
+        return [complex(self.dots[i], self.dots[i + 1]) for i in range(len(self.dots))]
+
+    def reshape(self):
+        self.dots = [self.point_x, self.point_y, self.player.x, self.player.y]
+        self.canvas.coords(self.id, self.dots)
 
 
 class BeamGame:
