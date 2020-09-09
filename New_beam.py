@@ -19,11 +19,6 @@ class Drawn:
     def drawing_remove(self):
         self.canvas.delete(self.id)
 
-    @property
-    @abstractmethod
-    def complex_dots(self):
-        return []
-
 
 class Rectangle(Drawn):
     def __init__(self, x, y, canvas):
@@ -39,11 +34,13 @@ class Rectangle(Drawn):
         self.canvas.coords(self.id, self.dots)
 
     @staticmethod
-    def complex_rectangle_dots(two_dots):
-        if len(two_dots) >= 4:
-            other_two_dots = [two_dots[0], two_dots[3], two_dots[2], two_dots[1]]
-            all_dots = two_dots + other_two_dots
-            return [complex(all_dots[i], all_dots[i + 1]) for i in range(0, 6, 2)]
+    def complex_rectangle_sides(diagonal):
+        if len(diagonal) >= 4:
+            sides = diagonal[0:2] + [diagonal[0], diagonal[3]]\
+                    + diagonal[2:4] + [diagonal[2], diagonal[1]]
+            return [complex(sides[i], sides[i + 1]) for i in range(0, 6, 2)]
+        else:
+            return []
 
     @property
     def complex_dots(self):
@@ -80,10 +77,6 @@ class Player(Drawn):
         self.y += self.velocity[1]
         self.move(self.velocity[0], self.velocity[1])
 
-    @property
-    def complex_dots(self):
-        return [complex(self.x, self.y)]
-
 
 class Beam(Drawn):
     def __init__(self, player, canvas):
@@ -108,11 +101,12 @@ class Beam(Drawn):
                 self.view += pi / 24
 
     @property
-    def complex_dots(self):
-        return [complex(self.dots[i], self.dots[i + 1]) for i in range(len(self.dots))]
+    def view_direction(self):
+        c_view = complex(self.point_x - self.player.x, self.point_y - self.player_x)
+        return cmath.polar(c_view[1])
 
     def reshape(self):
-        self.dots = [self.point_x, self.point_y, self.player.x, self.player.y]
+        self.dots = []
         self.canvas.coords(self.id, self.dots)
 
 
