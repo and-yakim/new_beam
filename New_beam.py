@@ -2,7 +2,7 @@ from functools import reduce
 from tkinter import *
 from math import pi
 from abc import abstractmethod
-import cmath
+from cmath import phase
 
 
 class Drawn:
@@ -38,7 +38,7 @@ class Rectangle(Drawn):
     def complex_rectangle_sides(diagonal):
         if len(diagonal) >= 4:
             corners = diagonal[0:2] + [diagonal[0], diagonal[3]] \
-                    + diagonal[2:4] + [diagonal[2], diagonal[1]]
+                      + diagonal[2:4] + [diagonal[2], diagonal[1]]
             c_corners = [complex(corners[i], corners[i + 1]) for i in range(0, 7, 2)]
             return [(c_corners[i], c_corners[i - 1]) for i in range(4)]
         else:
@@ -85,12 +85,11 @@ class Beam(Drawn):
     def __init__(self, player, canvas):
         self.point_x, self.point_y = 0, 0
         self.player = player
-        self.dots = [0] * 4
         Drawn.__init__(self, canvas)
         self.view = pi / 6
 
     def draw(self):
-        return self.canvas.create_polygon(self.dots, fill='white', width=0)
+        return self.canvas.create_polygon([0] * 4, fill='white', width=0)
 
     def change_point(self, x, y):
         self.point_x, self.point_y = x, y
@@ -106,11 +105,19 @@ class Beam(Drawn):
     @property
     def _view_direction(self):
         c_view = complex(self.point_x - self.player.x, self.point_y - self.player.x)
-        return cmath.phase(c_view[1])
+        return phase(c_view[1])
 
-    def reshape(self, obstacles):
-        self.dots = []
-        self.canvas.coords(self.id, self.dots)
+
+    def reshape(self, sections):
+        angle = self._view_direction
+        min_angle, max_angle = angle - self.view, angle + self.view
+        center = complex(self.player.x, self.player.y)
+        sections = map(
+            lambda section: (section[0] - center, section[1] - center),
+            sections
+        )
+        dots = []
+        self.canvas.coords(self.id, dots)
 
 
 class BeamGame:
@@ -134,7 +141,7 @@ class BeamGame:
         self.root.mainloop()
 
     @property
-    def obstacles(self):
+    def sections(self):
         blocks_sides = list(map(lambda block: block.complex_sides, self.blocks))
         field_sides = Rectangle.complex_rectangle_sides([0, 0, self.width, self.height])
         blocks_sides.append(field_sides)
@@ -142,7 +149,7 @@ class BeamGame:
 
     def step(self):
         self.player.apply_velocity()
-        self.beam.reshape(self.obstacles)
+        self.beam.reshape(self.sections)
         self.root.after(10, self.step)
 
     def bind(self):
