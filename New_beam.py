@@ -107,7 +107,6 @@ class Beam(Drawn):
         c_view = complex(self.point_x - self.player.x, self.point_y - self.player.x)
         return phase(c_view[1])
 
-
     def reshape(self, sections):
         angle = self._view_direction
         min_angle, max_angle = angle - self.view, angle + self.view
@@ -116,6 +115,18 @@ class Beam(Drawn):
             lambda section: (section[0] - center, section[1] - center),
             sections
         )
+        obstacles = map(
+            lambda s: ((s[0], phase(s[0])), (s[1], phase(s[1]))),
+            sections
+        )
+        intersections = [[], []]
+        for obs in obstacles:
+            min_obs_angle = min(obs[0][1], obs[1][1])
+            max_obs_angle = max(obs[0][1], obs[1][1])
+            if min_obs_angle <= min_angle <= max_obs_angle:
+                intersections[0].append(obs)
+            if min_obs_angle <= max_angle <= max_obs_angle:
+                intersections[1].append(obs)
         dots = []
         self.canvas.coords(self.id, dots)
 
