@@ -1,3 +1,4 @@
+from functools import reduce
 from tkinter import *
 from math import pi
 from abc import abstractmethod
@@ -36,15 +37,16 @@ class Rectangle(Drawn):
     @staticmethod
     def complex_rectangle_sides(diagonal):
         if len(diagonal) >= 4:
-            sides = diagonal[0:2] + [diagonal[0], diagonal[3]]\
+            corners = diagonal[0:2] + [diagonal[0], diagonal[3]] \
                     + diagonal[2:4] + [diagonal[2], diagonal[1]]
-            return [complex(sides[i], sides[i + 1]) for i in range(0, 6, 2)]
+            c_corners = [complex(corners[i], corners[i + 1]) for i in range(0, 7, 2)]
+            return [(c_corners[i], c_corners[i - 1]) for i in range(4)]
         else:
             return []
 
     @property
-    def complex_dots(self):
-        return Rectangle.complex_rectangle_dots(self.dots)
+    def complex_sides(self):
+        return self.complex_rectangle_sides(self.dots)
 
 
 class Player(Drawn):
@@ -63,7 +65,7 @@ class Player(Drawn):
     def change_wsad(self, num, value):
         self.wsad[num] = value
 
-    def apply_force(self):
+    def _apply_force(self):
         force = [self.wsad[3] - self.wsad[2], self.wsad[1] - self.wsad[0]]
         if force[0] and force[1]:
             force[0] *= 0.7
@@ -73,6 +75,7 @@ class Player(Drawn):
             self.velocity[i] *= 0.9
 
     def apply_velocity(self):
+        self._apply_force()
         self.x += self.velocity[0]
         self.y += self.velocity[1]
         self.move(self.velocity[0], self.velocity[1])
@@ -101,11 +104,11 @@ class Beam(Drawn):
                 self.view += pi / 24
 
     @property
-    def view_direction(self):
-        c_view = complex(self.point_x - self.player.x, self.point_y - self.player_x)
-        return cmath.polar(c_view[1])
+    def _view_direction(self):
+        c_view = complex(self.point_x - self.player.x, self.point_y - self.player.x)
+        return cmath.phase(c_view[1])
 
-    def reshape(self):
+    def reshape(self, obstacles):
         self.dots = []
         self.canvas.coords(self.id, self.dots)
 
@@ -130,10 +133,16 @@ class BeamGame:
 
         self.root.mainloop()
 
+    @property
+    def obstacles(self):
+        blocks_sides = list(map(lambda block: block.complex_sides, self.blocks))
+        field_sides = Rectangle.complex_rectangle_sides([0, 0, self.width, self.height])
+        blocks_sides.append(field_sides)
+        return reduce(lambda acc, side: acc + side, blocks_sides)
+
     def step(self):
-        self.player.apply_force()
         self.player.apply_velocity()
-        self.beam.reshape()
+        self.beam.reshape(self.obstacles)
         self.root.after(10, self.step)
 
     def bind(self):
@@ -172,7 +181,7 @@ class BeamGame:
     def blocks_clear(self):
         for block in self.blocks:
             block.drawing_remove()
-            del block
+        self.blocks = []
 
 
 def main():
